@@ -1,8 +1,131 @@
-const $=id=>document.getElementById(id);let speak=false;
-function add(role,text){$('welcome').classList.add('hidden');$('chat').classList.remove('hidden');const row=document.createElement('div');row.className='message '+role;const avatar=document.createElement('div');avatar.className='badge';avatar.textContent=role==='user'?'Y':'C';const bubble=document.createElement('div');bubble.className='bubble';const who=document.createElement('small');who.textContent=role==='user'?'YOU':'CARL · DEMO';const body=document.createElement('div');body.textContent=text;bubble.append(who,body);row.append(avatar,bubble);$('chat').append(row);$('chat').scrollTop=$('chat').scrollHeight}
-function answer(q){const s=q.toLowerCase();if(/hello|hi|hey/.test(s))return "Hello! I'm CARL, your personal AI project. This starter is running in demo mode. The interface is ready for a secure AI connection later.";if(/study|schedule|plan/.test(s))return "Let's make a practical plan: 1) Choose one clear goal. 2) Work in focused 25–40 minute sessions. 3) Take short breaks. 4) Review what you learned. Tell me your subject and available time to make this specific.";if(/electric vehicle|\bev\b/.test(s))return "An electric vehicle uses a battery to supply electrical energy to an electric motor. The motor converts electrical energy into mechanical energy to turn the wheels. A controller regulates power, and regenerative braking can recover some energy while slowing down.";if(/idea|project|invent/.test(s))return "Let's develop your idea systematically: define the problem, describe your solution, identify the science involved, sketch the system, estimate costs, and plan a safe small-scale test. What problem should it solve?";return "I received: “"+q+"”\n\nThis CARL starter is in local demo mode, so it doesn't contact an AI model yet. A real AI connection needs a secure backend and a provider whose age and usage terms permit your project."}
-function send(q){q=q.trim();if(!q)return;add('user',q);$('message').value='';setTimeout(()=>{const a=answer(q);add('assistant',a);if(speak&&'speechSynthesis'in window)speechSynthesis.speak(new SpeechSynthesisUtterance(a))},350)}
-$('form').addEventListener('submit',e=>{e.preventDefault();send($('message').value)});$('message').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('form').requestSubmit()}});document.querySelectorAll('[data-prompt]').forEach(b=>b.onclick=()=>send(b.dataset.prompt));
-function reset(){$('chat').replaceChildren();$('chat').classList.add('hidden');$('welcome').classList.remove('hidden')}
-$('newChat').onclick=reset;$('clear').onclick=reset;$('settingsButton').onclick=()=>$('settings').showModal();$('close').onclick=()=>$('settings').close();$('speak').onchange=e=>speak=e.target.checked;$('menu').onclick=()=>$('sidebar').classList.toggle('open');
-$('voice').onclick=()=>{const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R){alert('Voice input is not supported in this browser. Try Chrome.');return}const r=new R();r.lang='en-IN';r.onresult=e=>{$('message').value=e.results[0][0].transcript};r.onerror=()=>alert('Microphone permission may be needed.');r.start()};
+const $ = id => document.getElementById(id);
+
+const API_URL = "https://carl-ai.pranav-mohan.workers.dev";
+let speak = false;
+
+function add(role, text) {
+  $("welcome").classList.add("hidden");
+  $("chat").classList.remove("hidden");
+
+  const row = document.createElement("div");
+  row.className = "message " + role;
+
+  const avatar = document.createElement("div");
+  avatar.className = "badge";
+  avatar.textContent = role === "user" ? "Y" : "C";
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+
+  const who = document.createElement("small");
+  who.textContent = role === "user" ? "YOU" : "CARL · BACKEND";
+
+  const body = document.createElement("div");
+  body.textContent = text;
+
+  bubble.append(who, body);
+  row.append(avatar, bubble);
+
+  $("chat").append(row);
+  $("chat").scrollTop = $("chat").scrollHeight;
+}
+
+async function send(q) {
+  q = q.trim();
+  if (!q) return;
+
+  add("user", q);
+  $("message").value = "";
+
+  try {
+    const response = await fetch(API_URL + "/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message: q })
+    });
+
+    if (!response.ok) {
+      throw new Error("Server error: " + response.status);
+    }
+
+    const data = await response.json();
+    const reply = data.message || "I received your request.";
+
+    add("assistant", reply);
+
+    if (speak && "speechSynthesis" in window) {
+      speechSynthesis.speak(
+        new SpeechSynthesisUtterance(reply)
+      );
+    }
+  } catch (error) {
+    console.error(error);
+    add(
+      "assistant",
+      "I couldn't connect to my backend. Please check your internet connection and try again."
+    );
+  }
+}
+
+$("form").addEventListener("submit", e => {
+  e.preventDefault();
+  send($("message").value);
+});
+
+$("message").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    $("form").requestSubmit();
+  }
+});
+
+document.querySelectorAll("[data-prompt]").forEach(button => {
+  button.onclick = () => send(button.dataset.prompt);
+});
+
+function reset() {
+  $("chat").replaceChildren();
+  $("chat").classList.add("hidden");
+  $("welcome").classList.remove("hidden");
+}
+
+$("newChat").onclick = reset;
+$("clear").onclick = reset;
+
+$("settingsButton").onclick = () => $("settings").showModal();
+$("close").onclick = () => $("settings").close();
+
+$("speak").onchange = e => {
+  speak = e.target.checked;
+};
+
+$("menu").onclick = () => {
+  $("sidebar").classList.toggle("open");
+};
+
+$("voice").onclick = () => {
+  const Recognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if (!Recognition) {
+    alert("Voice input is not supported in this browser. Try Chrome.");
+    return;
+  }
+
+  const recognition = new Recognition();
+  recognition.lang = "en-IN";
+
+  recognition.onresult = e => {
+    $("message").value =
+      e.results[0][0].transcript;
+  };
+
+  recognition.onerror = () => {
+    alert("Microphone permission may be needed.");
+  };
+
+  recognition.start();
+};
