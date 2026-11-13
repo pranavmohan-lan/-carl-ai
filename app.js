@@ -1,13 +1,4 @@
 
-const $ = id => document.getElementById(id);
-
-const API_URL = "https://carl-ai.pranav-mohan.workers.dev";
-
-let speak = false;
-
-// Stores the current conversation
-let conversation = [];
-
 function add(role, text) {
   $("welcome").classList.add("hidden");
   $("chat").classList.remove("hidden");
@@ -33,6 +24,9 @@ function add(role, text) {
 
   $("chat").append(row);
   $("chat").scrollTop = $("chat").scrollHeight;
+
+  // Return the text element so we can update it live
+  return body;
 }
 
 async function send(q) {
@@ -42,11 +36,13 @@ async function send(q) {
   add("user", q);
   $("message").value = "";
 
-  // Save the user's message
   conversation.push({
     role: "user",
     content: q
   });
+
+  // Create an empty CARL response immediately
+  const output = add("assistant", "");
 
   try {
     const response = await fetch(API_URL + "/chat", {
@@ -60,19 +56,71 @@ async function send(q) {
     });
 
     if (!response.ok) {
-      throw new Error("Server error: " + response.status);
+      const error = await response.text();
+      throw new Error("Server error " + response.status + ": " + error);
     }
 
-    const data = await response.json();
-    const reply = data.message || "I received your request.";
+    if (!response.body) {
+      throw new Error("Streaming is not supported by this response.");
+    }
 
-    // Save CARL's reply for future context
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    let buffer = "";
+    let reply = "";
+
+    function processLine(line) {
+      if (!line.startsWith("data:")) return;
+
+      const data = line.slice(5).trim();
+
+      if (!data || data === "[DONE]") return;
+
+      try {
+        const chunk = JSON.parse(data);
+        const content = chunk.choices?.[0]?.delta?.content;
+
+        if (typeof content === "string" && content) {
+          reply += content;
+          output.textContent = reply;
+          $("chat").scrollTop = $("chat").scrollHeight;
+        }
+      } catch (error) {
+        console.warn("Could not parse stream chunk:", error);
+      }
+    }
+
+    while (true) {
+      const { value, done } = await reader.read();
+
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split(/\r?\n/);
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        processLine(line);
+      }
+    }
+
+    buffer += decoder.decode();
+
+    if (buffer.trim()) {
+      processLine(buffer);
+    }
+
+    if (!reply) {
+      throw new Error("The AI returned an empty response.");
+    }
+
+    // Save the complete answer to conversation history
     conversation.push({
       role: "assistant",
       content: reply
     });
-
-    add("assistant", reply);
 
     if (speak && "speechSynthesis" in window) {
       speechSynthesis.speak(
@@ -81,74 +129,10 @@ async function send(q) {
     }
 
   } catch (error) {
-    console.error(error);
+    console.error("CARL streaming error:", error);
 
-    add(
-      "assistant",
-      "I couldn't connect to my backend. Please check your internet connection and try again."
-    );
+    output.textContent = reply
+      ? reply + "\n\n[Connection interrupted]"
+      : "I couldn't generate a response. Please try again.";
   }
 }
-
-$("form").addEventListener("submit", e => {
-  e.preventDefault();
-  send($("message").value);
-});
-
-$("message").addEventListener("keydown", e => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    $("form").requestSubmit();
-  }
-});
-
-document.querySelectorAll("[data-prompt]").forEach(button => {
-  button.onclick = () => send(button.dataset.prompt);
-});
-
-function reset() {
-  conversation = [];
-
-  $("chat").replaceChildren();
-  $("chat").classList.add("hidden");
-  $("welcome").classList.remove("hidden");
-}
-
-$("newChat").onclick = reset;
-$("clear").onclick = reset;
-
-$("settingsButton").onclick = () => $("settings").showModal();
-$("close").onclick = () => $("settings").close();
-
-$("speak").onchange = e => {
-  speak = e.target.checked;
-};
-
-$("menu").onclick = () => {
-  $("sidebar").classList.toggle("open");
-};
-
-$("voice").onclick = () => {
-  const Recognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
-
-  if (!Recognition) {
-    alert("Voice input is not supported in this browser. Try Chrome.");
-    return;
-  }
-
-  const recognition = new Recognition();
-  recognition.lang = "en-IN";
-
-  recognition.onresult = e => {
-    $("message").value =
-      e.results[0][0].transcript;
-  };
-
-  recognition.onerror = () => {
-    alert("Microphone permission may be needed.");
-  };
-
-  recognition.start();
-};
