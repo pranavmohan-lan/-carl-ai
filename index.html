@@ -1,13 +1,169 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07111f"><title>CARL — Personal AI</title><link rel="stylesheet" href="styles.css"></head>
-<body><div class="glow"></div><div class="shell">
-<aside class="sidebar" id="sidebar"><div class="brand"><div class="mark">C</div><div><b>CARL</b><small>PERSONAL AI SYSTEM</small></div></div>
-<button class="new" id="newChat">＋ New conversation</button><p class="label">WORKSPACE</p><div class="nav active">◈ &nbsp; Assistant</div><div class="nav">◷ &nbsp; Recent activity</div>
-<div class="bottom"><div class="status"><i></i><div><b>Interface online</b><small>Local demo mode</small></div></div><button class="nav" id="settingsButton">⚙ &nbsp; Settings</button><div class="profile"><div class="avatar">C</div><div><b>CARL user</b><small>Personal workspace</small></div></div></div></aside>
-<main><header><button id="menu" class="menu">☰</button><div>CARL <span>/</span> <b>Assistant</b></div><div class="actions"><span class="pill">● DEMO MODE</span><button id="clear" class="icon">⌫</button></div></header>
-<section class="workspace"><div class="welcome" id="welcome"><div class="orb"><div>C</div></div><div class="eyebrow">● &nbsp; SYSTEM READY</div><h1>Good day. I'm <em>CARL.</em></h1><p>Your personal AI workspace. Ask a question, explore an idea, or plan your next project.</p>
-<div class="suggestions"><button data-prompt="Help me plan a productive study session.">✦ <b>Plan my day</b><small>Build a practical schedule</small></button><button data-prompt="Explain how an electric vehicle works.">⌁ <b>Explore a topic</b><small>Understand something new</small></button><button data-prompt="Help me brainstorm an original technology project.">◇ <b>Brainstorm ideas</b><small>Turn an idea into a plan</small></button></div></div>
-<div id="chat" class="chat hidden" aria-live="polite"></div>
-<div class="composer-wrap"><form id="form" class="composer"><textarea id="message" rows="1" placeholder="Message CARL..."></textarea><div class="compose-bottom"><button type="button" id="voice" class="voice">🎙 Voice</button><small>Demo responses · No API key required</small><button class="send" type="submit">↑</button></div></form><p class="disclaimer">CARL is a project interface. Verify important information independently.</p></div></section></main></div>
-<dialog id="settings"><div class="dialog-head"><div><small>PREFERENCES</small><h2>CARL settings</h2></div><button id="close" class="icon">✕</button></div><label class="setting"><span><b>Spoken responses</b><small>Read demo replies aloud.</small></span><input type="checkbox" id="speak"></label><p class="note">This starter runs in demo mode. A real AI connection needs a secure backend and a provider whose terms permit your use.</p></dialog>
-<script src="app.js"></script></body></html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#071321">
+  <meta name="description" content="CARL Personal AI System">
+  <title>CARL — Personal AI System</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="sidebar" id="sidebar">
+
+    <div class="brand">
+      <div class="brand-icon">C</div>
+      <div>
+        <h2>CARL</h2>
+        <small>PERSONAL AI SYSTEM</small>
+      </div>
+    </div>
+
+    <button class="new-chat" id="newChat">
+      + New conversation
+    </button>
+
+    <div class="section-label">WORKSPACE</div>
+
+    <button class="nav-item active">
+      ◈ &nbsp; Assistant
+    </button>
+
+    <button class="nav-item" id="historyButton">
+      ◷ &nbsp; Recent activity
+    </button>
+
+    <div class="sidebar-bottom">
+
+      <div class="connection">
+        <span class="online-dot"></span>
+        <div>
+          <strong id="connectionText">Connecting...</strong>
+          <small>CARL AI SYSTEM</small>
+        </div>
+      </div>
+
+      <button class="nav-item" id="settingsButton">
+        ⚙ &nbsp; Settings
+      </button>
+
+      <div class="user-profile">
+        <div class="avatar">C</div>
+        <div>
+          <strong>CARL user</strong>
+          <small>Personal workspace</small>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <header class="topbar">
+      <button class="menu-button" id="menu">☰</button>
+      <div>CARL <span>/</span> Assistant</div>
+      <div class="top-status" id="status">CONNECTING</div>
+    </header>
+
+    <section class="workspace">
+
+      <div class="welcome" id="welcome">
+        <div class="welcome-logo">C</div>
+        <h1>How can I help you?</h1>
+        <p>Your personal AI assistant, powered by GLM-5.3-Flash.</p>
+
+        <div class="suggestions">
+          <button data-prompt="Explain how artificial intelligence works.">
+            Explain artificial intelligence
+          </button>
+
+          <button data-prompt="Help me write a Python program.">
+            Help me with coding
+          </button>
+
+          <button data-prompt="Teach me something interesting about science.">
+            Learn something new
+          </button>
+        </div>
+      </div>
+
+      <div class="chat hidden" id="chat"></div>
+
+    </section>
+
+    <footer class="composer-area">
+
+      <form class="composer" id="form">
+
+        <textarea
+          id="message"
+          placeholder="Message CARL..."
+          rows="1"
+          autocomplete="off"
+          required
+        ></textarea>
+
+        <div class="composer-bottom">
+
+          <div class="composer-tools">
+            <button type="button" id="voice" class="tool-button">
+              🎙 Voice
+            </button>
+
+            <span id="typingStatus">GLM-5.3-Flash</span>
+          </div>
+
+          <button type="submit" class="send-button" id="sendButton">
+            ↑
+          </button>
+
+        </div>
+
+      </form>
+
+      <div class="disclaimer">
+        CARL is a personal AI project. Verify important information independently.
+      </div>
+
+    </footer>
+
+  </main>
+</div>
+
+<dialog id="settings">
+
+  <div class="settings-header">
+    <h2>CARL Settings</h2>
+    <button id="close">✕</button>
+  </div>
+
+  <label class="setting-option">
+    <span>
+      <strong>Voice responses</strong>
+      <small>Read CARL's answers aloud.</small>
+    </span>
+    <input type="checkbox" id="speak">
+  </label>
+
+  <label class="setting-option">
+    <span>
+      <strong>Save conversations</strong>
+      <small>Store chat history in this browser.</small>
+    </span>
+    <input type="checkbox" id="saveHistory" checked>
+  </label>
+
+  <button id="clear" class="danger-button">
+    Clear current conversation
+  </button>
+
+</dialog>
+
+</body>
+</html>
