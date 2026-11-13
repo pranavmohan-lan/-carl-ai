@@ -1,7 +1,12 @@
+
 const $ = id => document.getElementById(id);
 
 const API_URL = "https://carl-ai.pranav-mohan.workers.dev";
+
 let speak = false;
+
+// Stores the current conversation
+let conversation = [];
 
 function add(role, text) {
   $("welcome").classList.add("hidden");
@@ -18,7 +23,7 @@ function add(role, text) {
   bubble.className = "bubble";
 
   const who = document.createElement("small");
-  who.textContent = role === "user" ? "YOU" : "CARL · BACKEND";
+  who.textContent = role === "user" ? "YOU" : "CARL · GLM-5.3-FLASH";
 
   const body = document.createElement("div");
   body.textContent = text;
@@ -37,13 +42,21 @@ async function send(q) {
   add("user", q);
   $("message").value = "";
 
+  // Save the user's message
+  conversation.push({
+    role: "user",
+    content: q
+  });
+
   try {
     const response = await fetch(API_URL + "/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ message: q })
+      body: JSON.stringify({
+        messages: conversation.slice(-20)
+      })
     });
 
     if (!response.ok) {
@@ -53,6 +66,12 @@ async function send(q) {
     const data = await response.json();
     const reply = data.message || "I received your request.";
 
+    // Save CARL's reply for future context
+    conversation.push({
+      role: "assistant",
+      content: reply
+    });
+
     add("assistant", reply);
 
     if (speak && "speechSynthesis" in window) {
@@ -60,8 +79,10 @@ async function send(q) {
         new SpeechSynthesisUtterance(reply)
       );
     }
+
   } catch (error) {
     console.error(error);
+
     add(
       "assistant",
       "I couldn't connect to my backend. Please check your internet connection and try again."
@@ -86,6 +107,8 @@ document.querySelectorAll("[data-prompt]").forEach(button => {
 });
 
 function reset() {
+  conversation = [];
+
   $("chat").replaceChildren();
   $("chat").classList.add("hidden");
   $("welcome").classList.remove("hidden");
